@@ -1,0 +1,160 @@
+<div class="min-h-screen bg-dracula-bg text-dracula-fg relative">
+  <!-- Top Navigation -->
+  <nav class="glass-panel sticky top-0 z-40 border-b border-dracula-purple/20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-dracula-purple to-dracula-pink flex items-center justify-center font-bold shadow-lg shadow-dracula-purple/20">
+            A
+          </div>
+          <span class="font-bold text-xl tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-dracula-fg to-dracula-purple">Admin Dashboard</span>
+        </div>
+        <button (click)="logout()" class="text-dracula-comment hover:text-dracula-pink transition-colors font-medium">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Tabs Header -->
+    <div class="flex justify-between items-end mb-8 border-b border-dracula-cur/50">
+      <div class="flex space-x-4">
+        <button (click)="activeTab = 'books'" 
+                [ngClass]="{'border-dracula-pink text-dracula-pink bg-dracula-pink/5': activeTab === 'books', 'border-transparent text-dracula-comment hover:text-dracula-fg': activeTab !== 'books'}"
+                class="pb-4 px-4 font-medium sm:text-lg border-b-2 transition-all">
+          All Books
+        </button>
+        <button (click)="activeTab = 'requests'"
+                [ngClass]="{'border-dracula-cyan text-dracula-cyan bg-dracula-cyan/5': activeTab === 'requests', 'border-transparent text-dracula-comment hover:text-dracula-fg': activeTab !== 'requests'}"
+                class="pb-4 px-4 font-medium sm:text-lg border-b-2 transition-all flex items-center gap-2">
+          Pending Requests
+          <span *ngIf="requests.length" class="bg-dracula-red text-dracula-bg text-xs font-bold px-2 py-0.5 rounded-full">{{ requests.length }}</span>
+        </button>
+      </div>
+      
+      <button *ngIf="activeTab === 'books'" (click)="openAddBookModal()" class="mb-3 px-4 py-2 bg-gradient-to-r from-dracula-purple to-dracula-pink text-dracula-bg font-bold rounded-lg shadow-lg hover:shadow-dracula-purple/50 transform hover:-translate-y-0.5 transition-all text-sm">
+        + Add Book
+      </button>
+    </div>
+
+    <!-- Tab 1: Books -->
+    <div *ngIf="activeTab === 'books'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+      <app-book-card *ngFor="let book of books" [book]="book" role="admin" 
+                     (viewQr)="viewQr($event)" (issueBook)="openIssueModal($event)"></app-book-card>
+      
+      <div *ngIf="books.length === 0" class="col-span-full text-center py-12 text-dracula-comment border border-dashed border-dracula-cur rounded-xl">
+        No books available in the system yet.
+      </div>
+    </div>
+
+    <!-- Tab 2: Requests / Assignments -->
+    <div *ngIf="activeTab === 'requests'" class="space-y-4 animate-fade-in">
+      <div *ngFor="let req of requests" class="glass-panel p-6 rounded-xl flex items-center justify-between transition-all hover:-translate-y-0.5">
+        <div>
+          <h4 class="font-semibold text-dracula-fg text-lg">Book #{{ req.book_id }} requested by <span class="text-dracula-purple">{{ req.username }}</span></h4>
+          <p class="text-xs text-dracula-comment mt-1">Requested on: {{ req.request_date | date:'medium' }}</p>
+          <p class="text-sm text-dracula-pink mt-1 font-medium">Duration: {{ req.duration_weeks }} Week(s)</p>
+          <span class="inline-block mt-2 px-2 py-1 text-xs font-bold rounded" 
+                [ngClass]="{'bg-dracula-orange/20 text-dracula-orange': req.status === 'pending', 'bg-dracula-green/20 text-dracula-green': req.status === 'approved', 'bg-dracula-red/20 text-dracula-red': req.status === 'rejected'}">
+            {{ req.status | uppercase }}
+          </span>
+        </div>
+        
+        <div class="flex items-center gap-3" *ngIf="req.status === 'pending'">
+          <button (click)="approveReq(req.id)" class="px-4 py-2 bg-dracula-green/20 hover:bg-dracula-green text-dracula-green hover:text-dracula-bg border border-dracula-green font-medium rounded-lg transition-all shadow-sm">
+            Approve
+          </button>
+          <button (click)="rejectReq(req.id)" class="px-4 py-2 bg-dracula-red/20 hover:bg-dracula-red text-dracula-red hover:text-dracula-bg border border-dracula-red font-medium rounded-lg transition-all shadow-sm">
+            Reject
+          </button>
+        </div>
+      </div>
+      
+      <div *ngIf="requests.length === 0" class="text-center py-12 text-dracula-comment border border-dashed border-dracula-cur rounded-xl">
+        No requests available.
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ================= Modals ================= -->
+
+<!-- Add Book Modal -->
+<div *ngIf="showAddBookModal" class="fixed inset-0 z-50 flex items-center justify-center no-print">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" (click)="closeAddBookModal()"></div>
+  <div class="glass-panel rounded-2xl w-full max-w-md relative z-10 p-8 transform transition-all shadow-2xl bg-dracula-bg/95">
+    <h3 class="text-xl font-bold mb-6 text-dracula-fg">Add New Book</h3>
+    <form (submit)="submitAddBook()" class="flex flex-col gap-4">
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-dracula-comment">Title</label>
+        <input type="text" [(ngModel)]="newBook.title" name="title" required
+               class="px-4 py-2.5 bg-dracula-cur border-none focus:ring-2 focus:ring-dracula-purple rounded-lg outline-none text-dracula-fg" placeholder="Book Title">
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-dracula-comment">Author</label>
+        <input type="text" [(ngModel)]="newBook.author" name="author" required
+               class="px-4 py-2.5 bg-dracula-cur border-none focus:ring-2 focus:ring-dracula-purple rounded-lg outline-none text-dracula-fg" placeholder="Author Name">
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-dracula-comment">Category</label>
+        <input type="text" [(ngModel)]="newBook.category" name="category" required
+               class="px-4 py-2.5 bg-dracula-cur border-none focus:ring-2 focus:ring-dracula-purple rounded-lg outline-none text-dracula-fg" placeholder="Category (e.g. Science)">
+      </div>
+      <div class="mt-4 flex gap-3">
+        <button type="submit" class="flex-1 py-2.5 bg-dracula-pink hover:bg-dracula-purple text-dracula-bg font-bold rounded-lg transition-colors">Add Book & Gen QR</button>
+        <button type="button" (click)="closeAddBookModal()" class="flex-1 py-2.5 bg-transparent border border-dracula-cur hover:border-dracula-fg text-dracula-fg rounded-lg transition-colors">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Issue Book Modal -->
+<div *ngIf="showIssueModal" class="fixed inset-0 z-50 flex items-center justify-center no-print">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" (click)="closeIssueModal()"></div>
+  <div class="glass-panel rounded-2xl w-full max-w-sm relative z-10 p-8 transform transition-all shadow-2xl bg-dracula-bg/95">
+    <h3 class="text-xl font-bold mb-6 text-dracula-pink">Issue Book</h3>
+    <form (submit)="submitIssue()" class="flex flex-col gap-4">
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-dracula-comment">Select User</label>
+        <select [(ngModel)]="issueData.username" name="username" class="px-4 py-2.5 bg-dracula-cur border-none focus:ring-2 focus:ring-dracula-pink rounded-lg outline-none text-dracula-fg appearance-none">
+          <option *ngFor="let u of users" [value]="u">{{ u }}</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-dracula-comment">Duration (Weeks)</label>
+        <input type="number" min="1" max="52" [(ngModel)]="issueData.duration_weeks" name="duration" required
+               class="px-4 py-2.5 bg-dracula-cur border-none focus:ring-2 focus:ring-dracula-pink rounded-lg outline-none text-dracula-fg">
+      </div>
+      <div class="mt-4 flex gap-3">
+        <button type="submit" class="flex-1 py-2.5 bg-dracula-cyan hover:bg-dracula-pink text-dracula-bg font-bold rounded-lg transition-colors">Issue Now</button>
+        <button type="button" (click)="closeIssueModal()" class="flex-1 py-2.5 bg-transparent border border-dracula-cur text-dracula-fg rounded-lg transition-colors">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- QR Code Modal (Printed logic included) -->
+<div *ngIf="showQrModal" class="fixed inset-0 z-50 flex items-center justify-center print-area">
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" (click)="closeQrModal()" style="print-color-adjust: exact;"></div>
+  
+  <div class="glass-panel rounded-2xl w-full max-w-sm relative z-10 p-8 transform transition-all shadow-2xl flex flex-col items-center border border-dracula-purple/30 bg-dracula-bg">
+    <button (click)="closeQrModal()" class="absolute top-4 right-4 text-dracula-comment hover:text-dracula-fg transition-colors no-print">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    </button>
+    
+    <h3 class="text-xl font-bold mb-6 text-dracula-fg no-print">Book QR Code</h3>
+    
+    <div class="bg-white p-4 rounded-xl shadow-inner print:mb-8">
+      <img [src]="qrCodeUrl" alt="Book QR" class="w-48 h-48 object-contain">
+    </div>
+    
+    <div class="mt-8 flex gap-4 w-full no-print">
+      <button (click)="printQr()" class="flex-1 py-2.5 bg-dracula-purple hover:bg-dracula-pink text-dracula-bg font-bold rounded-lg transition-colors shadow-lg shadow-dracula-purple/30">
+        Print QR
+      </button>
+      <button (click)="closeQrModal()" class="flex-1 py-2.5 bg-transparent border border-dracula-cur hover:border-dracula-fg text-dracula-fg rounded-lg transition-colors">
+        Close
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,91 @@
+<div class="min-h-screen bg-dracula-bg text-dracula-fg relative">
+  <!-- Top Navigation -->
+  <nav class="glass-panel sticky top-0 z-40 border-b border-dracula-cyan/20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-dracula-cyan to-dracula-green flex items-center justify-center font-bold shadow-lg shadow-dracula-cyan/20 text-dracula-bg">
+            U
+          </div>
+          <span class="font-bold text-xl tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-dracula-fg to-dracula-cyan">User Dashboard</span>
+        </div>
+        <button (click)="logout()" class="text-dracula-comment hover:text-dracula-pink transition-colors font-medium">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Tabs Header -->
+    <div class="flex space-x-4 mb-8 border-b border-dracula-cur/50">
+      <button (click)="activeTab = 'available'" 
+              [ngClass]="{'border-dracula-cyan text-dracula-cyan bg-dracula-cyan/5': activeTab === 'available', 'border-transparent text-dracula-comment hover:text-dracula-fg': activeTab !== 'available'}"
+              class="pb-4 px-4 font-medium sm:text-lg border-b-2 transition-all">
+        Available Books
+      </button>
+      <button (click)="activeTab = 'assigned'"
+              [ngClass]="{'border-dracula-green text-dracula-green bg-dracula-green/5': activeTab === 'assigned', 'border-transparent text-dracula-comment hover:text-dracula-fg': activeTab !== 'assigned'}"
+              class="pb-4 px-4 font-medium sm:text-lg border-b-2 transition-all flex items-center gap-2">
+        My Assigned Books
+        <span *ngIf="assignedBooks.length" class="bg-dracula-purple text-dracula-bg text-xs font-bold px-2 py-0.5 rounded-full">{{ assignedBooks.length }}</span>
+      </button>
+    </div>
+
+    <!-- Notification Toast -->
+    <div *ngIf="requestMessage" class="fixed top-20 right-4 z-50 bg-dracula-green text-dracula-bg px-6 py-3 rounded-xl shadow-lg font-medium animate-fade-in-down flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      {{ requestMessage }}
+    </div>
+    
+    <div *ngIf="requestError" class="fixed top-20 right-4 z-50 bg-dracula-red text-dracula-bg px-6 py-3 rounded-xl shadow-lg font-medium animate-fade-in-down flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      {{ requestError }}
+    </div>
+
+    <!-- Tab 1: Available Books Grid -->
+    <div *ngIf="activeTab === 'available'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in delay-100">
+      <app-book-card *ngFor="let book of books" 
+                     [book]="book" 
+                     role="user" 
+                     (requestBook)="openRequestModal($event)">
+      </app-book-card>
+      
+      <div *ngIf="books.length === 0" class="col-span-full text-center py-12 text-dracula-comment border border-dashed border-dracula-cur rounded-xl">
+        No books available in the system right now.
+      </div>
+    </div>
+
+    <!-- Tab 2: Assigned Books Grid -->
+    <div *ngIf="activeTab === 'assigned'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in delay-100">
+      <app-book-card *ngFor="let book of assignedBooks" 
+                     [book]="book" 
+                     role="admin" > 
+                     <!-- Using role admin just to forcefully show the issue status accurately, hacky but gets styling right out of box -->
+      </app-book-card>
+      
+      <div *ngIf="assignedBooks.length === 0" class="col-span-full text-center py-12 text-dracula-comment border border-dashed border-dracula-cur rounded-xl">
+        You have no assigned books yet. You can request some from the Available Books tab!
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Request Duration Modal -->
+<div *ngIf="showRequestModal" class="fixed inset-0 z-50 flex items-center justify-center no-print">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" (click)="closeRequestModal()"></div>
+  <div class="glass-panel rounded-2xl w-full max-w-sm relative z-10 p-8 transform transition-all shadow-2xl bg-dracula-bg/95 border border-dracula-cyan/30">
+    <h3 class="text-xl font-bold mb-6 text-dracula-cyan">Request Book</h3>
+    <p class="text-sm text-dracula-fg mb-4">Please specify the duration you'd like to issue this book for.</p>
+    <form (submit)="submitRequest()" class="flex flex-col gap-4">
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-dracula-comment">Duration (Weeks)</label>
+        <input type="number" min="1" max="52" [(ngModel)]="requestData.duration_weeks" name="duration" required
+               class="px-4 py-2.5 bg-dracula-cur border-none focus:ring-2 focus:ring-dracula-cyan rounded-lg outline-none text-dracula-fg">
+      </div>
+      <div class="mt-4 flex gap-3">
+        <button type="submit" class="flex-1 py-2.5 bg-dracula-cyan hover:bg-dracula-purple text-dracula-bg font-bold rounded-lg transition-colors">Submit Request</button>
+        <button type="button" (click)="closeRequestModal()" class="flex-1 py-2.5 bg-transparent border border-dracula-cur text-dracula-fg rounded-lg transition-colors">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

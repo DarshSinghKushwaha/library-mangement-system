@@ -1,0 +1,52 @@
+<div class="min-h-screen flex items-center justify-center bg-dracula-bg bg-opacity-90 relative overflow-hidden">
+  
+  <!-- Decorative background elements -->
+  <div class="absolute -top-32 -left-32 w-96 h-96 bg-dracula-purple rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+  <div class="absolute top-1/2 -right-32 w-96 h-96 bg-dracula-pink rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+  <div class="absolute -bottom-32 left-1/2 w-96 h-96 bg-dracula-cyan rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+
+  <div class="w-full max-w-md p-8 glass-panel rounded-2xl shadow-xl z-10">
+    <div class="text-center mb-10">
+      <h1 class="text-3xl font-bold text-dracula-fg tracking-wide">Library System</h1>
+      <p class="text-dracula-comment mt-2">Welcome! Please login to continue.</p>
+    </div>
+
+    <!-- Quick login switchers for demonstration -->
+    <div class="flex gap-4 mb-6 justify-center">
+      <button type="button" (click)="setRole('admin')" 
+              class="px-4 py-2 border border-dracula-purple text-dracula-purple rounded-lg hover:bg-dracula-purple hover:text-dracula-bg transition-colors font-medium">
+        Load Admin Info
+      </button>
+      <button type="button" (click)="setRole('user')"
+              class="px-4 py-2 border border-dracula-cyan text-dracula-cyan rounded-lg hover:bg-dracula-cyan hover:text-dracula-bg transition-colors font-medium">
+        Load User Info
+      </button>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+      
+      <div *ngIf="error" class="p-3 bg-dracula-red bg-opacity-20 border border-dracula-red text-dracula-red rounded-lg text-sm text-center">
+        {{ error }}
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="username" class="text-sm font-medium text-dracula-fg">Username</label>
+        <input type="text" id="username" formControlName="username" 
+               class="px-4 py-3 bg-dracula-cur border-none focus:ring-2 focus:ring-dracula-purple rounded-lg outline-none text-dracula-fg transition-all shadow-inner"
+               placeholder="Enter your username">
+      </div>
+      
+      <div class="flex flex-col gap-2">
+        <label for="password" class="text-sm font-medium text-dracula-fg">Password</label>
+        <input type="password" id="password" formControlName="password"
+               class="px-4 py-3 bg-dracula-cur border-none focus:ring-2 focus:ring-dracula-purple rounded-lg outline-none text-dracula-fg transition-all shadow-inner"
+               placeholder="••••••••">
+      </div>
+      
+      <button type="submit" [disabled]="!loginForm.valid"
+              class="mt-4 py-3 px-6 bg-gradient-to-r from-dracula-purple to-dracula-pink text-dracula-bg font-bold rounded-lg shadow-lg hover:shadow-dracula-purple/50 transform hover:-translate-y-0.5 transition-all w-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-dracula-purple focus:ring-offset-dracula-bg disabled:opacity-50 disabled:cursor-not-allowed">
+        SIGN IN
+      </button>
+    </form>
+  </div>
+</div>
