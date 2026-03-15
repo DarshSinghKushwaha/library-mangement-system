@@ -17,18 +17,29 @@
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     
     <!-- Tabs Header -->
-    <div class="flex space-x-4 mb-8 border-b border-dracula-cur/50">
-      <button (click)="activeTab = 'available'" 
-              [ngClass]="{'border-dracula-cyan text-dracula-cyan bg-dracula-cyan/5': activeTab === 'available', 'border-transparent text-dracula-comment hover:text-dracula-fg': activeTab !== 'available'}"
-              class="pb-4 px-4 font-medium sm:text-lg border-b-2 transition-all">
-        Available Books
-      </button>
-      <button (click)="activeTab = 'assigned'"
-              [ngClass]="{'border-dracula-green text-dracula-green bg-dracula-green/5': activeTab === 'assigned', 'border-transparent text-dracula-comment hover:text-dracula-fg': activeTab !== 'assigned'}"
-              class="pb-4 px-4 font-medium sm:text-lg border-b-2 transition-all flex items-center gap-2">
-        My Assigned Books
-        <span *ngIf="assignedBooks.length" class="bg-dracula-purple text-dracula-bg text-xs font-bold px-2 py-0.5 rounded-full">{{ assignedBooks.length }}</span>
-      </button>
+    <div class="flex justify-between items-end mb-8 border-b border-dracula-cur/50">
+      <div class="flex space-x-4">
+        <button (click)="activeTab = 'available'" 
+                [ngClass]="{'border-dracula-cyan text-dracula-cyan bg-dracula-cyan/5': activeTab === 'available', 'border-transparent text-dracula-comment hover:text-dracula-fg': activeTab !== 'available'}"
+                class="pb-4 px-4 font-medium sm:text-lg border-b-2 transition-all">
+          Available Books
+          <span *ngIf="totalBooks" class="ml-1 text-xs text-dracula-comment">({{ totalBooks }})</span>
+        </button>
+        <button (click)="activeTab = 'assigned'"
+                [ngClass]="{'border-dracula-green text-dracula-green bg-dracula-green/5': activeTab === 'assigned', 'border-transparent text-dracula-comment hover:text-dracula-fg': activeTab !== 'assigned'}"
+                class="pb-4 px-4 font-medium sm:text-lg border-b-2 transition-all flex items-center gap-2">
+          My Assigned Books
+          <span *ngIf="assignedBooks.length" class="bg-dracula-purple text-dracula-bg text-xs font-bold px-2 py-0.5 rounded-full">{{ assignedBooks.length }}</span>
+        </button>
+      </div>
+      
+      <div class="flex items-center gap-3 mb-3">
+        <div class="relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dracula-comment" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()" placeholder="Search..." 
+                 class="pl-9 pr-4 py-2 bg-dracula-cur border border-dracula-cur focus:border-dracula-cyan focus:ring-1 focus:ring-dracula-cyan rounded-lg outline-none text-dracula-fg text-sm w-56 transition-colors placeholder:text-dracula-comment/60">
+        </div>
+      </div>
     </div>
 
     <!-- Notification Toast -->
@@ -42,29 +53,43 @@
       {{ requestError }}
     </div>
 
-    <!-- Tab 1: Available Books Grid -->
-    <div *ngIf="activeTab === 'available'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in delay-100">
-      <app-book-card *ngFor="let book of books" 
-                     [book]="book" 
-                     role="user" 
-                     (requestBook)="openRequestModal($event)">
-      </app-book-card>
+    <!-- Tab 1: Available Books — Horizontal Infinite Scroll -->
+    <div *ngIf="activeTab === 'available'" class="animate-fade-in">
+      <div class="flex gap-6 overflow-x-auto pb-4 scroll-smooth" style="scrollbar-width: thin; scrollbar-color: #6272a4 transparent;">
+        <div *ngFor="let book of books; trackBy: trackByBookId" class="flex-shrink-0 w-[300px]">
+          <app-book-card [book]="book" 
+                         role="user" 
+                         (requestBook)="openRequestModal($event)">
+          </app-book-card>
+        </div>
+
+        <!-- Sentinel for Intersection Observer -->
+        <div #bookSentinel class="flex-shrink-0 w-16 flex items-center justify-center" *ngIf="hasMore">
+          <div class="flex flex-col items-center gap-2 text-dracula-comment">
+            <svg class="w-6 h-6 animate-spin" *ngIf="isLoadingBooks" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
       
-      <div *ngIf="books.length === 0" class="col-span-full text-center py-12 text-dracula-comment border border-dashed border-dracula-cur rounded-xl">
-        No books available in the system right now.
+      <div *ngIf="books.length === 0 && !isLoadingBooks" class="text-center py-12 text-dracula-comment border border-dashed border-dracula-cur rounded-xl">
+        {{ searchQuery ? 'No books match your search.' : 'No books available in the system right now.' }}
       </div>
     </div>
 
-    <!-- Tab 2: Assigned Books Grid -->
-    <div *ngIf="activeTab === 'assigned'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in delay-100">
-      <app-book-card *ngFor="let book of assignedBooks" 
-                     [book]="book" 
-                     role="admin" > 
-                     <!-- Using role admin just to forcefully show the issue status accurately, hacky but gets styling right out of box -->
-      </app-book-card>
+    <!-- Tab 2: Assigned Books — Horizontal Scroll (client-filtered, not paginated) -->
+    <div *ngIf="activeTab === 'assigned'" class="animate-fade-in">
+      <div class="flex gap-6 overflow-x-auto pb-4 scroll-smooth" style="scrollbar-width: thin; scrollbar-color: #6272a4 transparent;">
+        <div *ngFor="let book of filteredAssignedBooks; trackBy: trackByBookId" class="flex-shrink-0 w-[300px]">
+          <app-book-card [book]="book" role="admin">
+          </app-book-card>
+        </div>
+      </div>
       
-      <div *ngIf="assignedBooks.length === 0" class="col-span-full text-center py-12 text-dracula-comment border border-dashed border-dracula-cur rounded-xl">
-        You have no assigned books yet. You can request some from the Available Books tab!
+      <div *ngIf="filteredAssignedBooks.length === 0" class="text-center py-12 text-dracula-comment border border-dashed border-dracula-cur rounded-xl">
+        {{ searchQuery ? 'No assigned books match your search.' : 'You have no assigned books yet. You can request some from the Available Books tab!' }}
       </div>
     </div>
   </main>

@@ -8,6 +8,11 @@ router = APIRouter()
 
 @router.get("/", response_model=List[IssueRequestResponse])
 def get_requests():
+    # Enrich each request with book_title
+    for req in requests_db:
+        if "book_title" not in req or req["book_title"] is None:
+            book = next((b for b in books_db if b["id"] == req["book_id"]), None)
+            req["book_title"] = book["title"] if book else None
     return requests_db
 
 @router.post("/", response_model=IssueRequestResponse)
@@ -27,6 +32,7 @@ def create_request(req: IssueRequestCreate, username: str = "user1"):
     new_request = {
         "id": new_id,
         "book_id": req.book_id,
+        "book_title": book["title"],
         "username": username,
         "status": "pending",
         "request_date": datetime.now().isoformat(),

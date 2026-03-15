@@ -33,6 +33,7 @@ class IssueRequestCreate(BaseModel):
 class IssueRequestResponse(BaseModel):
     id: int
     book_id: int
+    book_title: Optional[str] = None
     username: str
     status: str
     request_date: str

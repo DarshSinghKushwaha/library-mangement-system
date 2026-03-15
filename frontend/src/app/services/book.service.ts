@@ -14,6 +14,13 @@ export class BookService {
     return this.http.get<any[]>(`${this.apiUrl}/books`);
   }
 
+  getBooksPaginated(cursor?: number | null, limit: number = 12, search?: string): Observable<any> {
+    let params: any = { limit: limit.toString() };
+    if (cursor != null) params.cursor = cursor.toString();
+    if (search && search.trim()) params.search = search.trim();
+    return this.http.get<any>(`${this.apiUrl}/books/paginated`, { params });
+  }
+
   addBook(bookData: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/books`, bookData);
   }

@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends
-from typing import List
+from fastapi import APIRouter, HTTPException, Depends, Query
+from typing import List, Optional
 from schemas import BookResponse, BookCreate, DirectIssueCreate
 from database import books_db, users_db
 import qrcode
@@ -8,6 +8,39 @@ from io import BytesIO
 import json
 
 router = APIRouter()
+
+@router.get("/paginated")
+def get_books_paginated(
+    cursor: Optional[int] = Query(None, description="ID of the last item from previous page"),
+    limit: int = Query(12, ge=1, le=50, description="Number of items per page"),
+    search: Optional[str] = Query(None, description="Search query for title/author/category"),
+):
+    # Filter by search if provided
+    filtered = books_db
+    if search and search.strip():
+        q = search.lower().strip()
+        filtered = [b for b in books_db if
+                    q in b["title"].lower() or
+                    q in b["author"].lower() or
+                    q in b["category"].lower()]
+
+    total = len(filtered)
+
+    # Apply cursor: return items with id > cursor
+    if cursor is not None:
+        filtered = [b for b in filtered if b["id"] > cursor]
+
+    # Take `limit` items
+    page = filtered[:limit]
+    has_more = len(filtered) > limit
+    next_cursor = page[-1]["id"] if page and has_more else None
+
+    return {
+        "items": page,
+        "next_cursor": next_cursor,
+        "has_more": has_more,
+        "total": total,
+    }
 
 @router.get("/", response_model=List[BookResponse])
 def get_books():

@@ -30,7 +30,7 @@ export class LoginComponent {
     if (role === 'admin') {
       this.loginForm.patchValue({ username: 'admin', password: 'password' });
     } else {
-      this.loginForm.patchValue({ username: 'user1', password: 'password' });
+      this.loginForm.patchValue({ username: 'alice', password: 'password' });
     }
   }
 

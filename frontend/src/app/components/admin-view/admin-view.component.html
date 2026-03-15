@@ -22,6 +22,7 @@
                 [ngClass]="{'border-dracula-pink text-dracula-pink bg-dracula-pink/5': activeTab === 'books', 'border-transparent text-dracula-comment hover:text-dracula-fg': activeTab !== 'books'}"
                 class="pb-4 px-4 font-medium sm:text-lg border-b-2 transition-all">
           All Books
+          <span *ngIf="totalBooks" class="ml-1 text-xs text-dracula-comment">({{ totalBooks }})</span>
         </button>
         <button (click)="activeTab = 'requests'"
                 [ngClass]="{'border-dracula-cyan text-dracula-cyan bg-dracula-cyan/5': activeTab === 'requests', 'border-transparent text-dracula-comment hover:text-dracula-fg': activeTab !== 'requests'}"
@@ -31,26 +32,48 @@
         </button>
       </div>
       
-      <button *ngIf="activeTab === 'books'" (click)="openAddBookModal()" class="mb-3 px-4 py-2 bg-gradient-to-r from-dracula-purple to-dracula-pink text-dracula-bg font-bold rounded-lg shadow-lg hover:shadow-dracula-purple/50 transform hover:-translate-y-0.5 transition-all text-sm">
-        + Add Book
-      </button>
+      <div class="flex items-center gap-3 mb-3">
+        <!-- Search Bar -->
+        <div class="relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dracula-comment" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()" placeholder="Search..." 
+                 class="pl-9 pr-4 py-2 bg-dracula-cur border border-dracula-cur focus:border-dracula-purple focus:ring-1 focus:ring-dracula-purple rounded-lg outline-none text-dracula-fg text-sm w-56 transition-colors placeholder:text-dracula-comment/60">
+        </div>
+        <button *ngIf="activeTab === 'books'" (click)="openAddBookModal()" class="px-4 py-2 bg-gradient-to-r from-dracula-purple to-dracula-pink text-dracula-bg font-bold rounded-lg shadow-lg hover:shadow-dracula-purple/50 transform hover:-translate-y-0.5 transition-all text-sm whitespace-nowrap">
+          + Add Book
+        </button>
+      </div>
     </div>
 
-    <!-- Tab 1: Books -->
-    <div *ngIf="activeTab === 'books'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
-      <app-book-card *ngFor="let book of books" [book]="book" role="admin" 
-                     (viewQr)="viewQr($event)" (issueBook)="openIssueModal($event)"></app-book-card>
+    <!-- Tab 1: Books — Horizontal Infinite Scroll -->
+    <div *ngIf="activeTab === 'books'" class="animate-fade-in">
+      <div class="flex gap-6 overflow-x-auto pb-4 scroll-smooth" style="scrollbar-width: thin; scrollbar-color: #6272a4 transparent;">
+        <div *ngFor="let book of books; trackBy: trackByBookId" class="flex-shrink-0 w-[300px]">
+          <app-book-card [book]="book" role="admin"
+                         (viewQr)="viewQr($event)" (issueBook)="openIssueModal($event)"></app-book-card>
+        </div>
+
+        <!-- Sentinel for Intersection Observer -->
+        <div #bookSentinel class="flex-shrink-0 w-16 flex items-center justify-center" *ngIf="hasMore">
+          <div class="flex flex-col items-center gap-2 text-dracula-comment">
+            <svg class="w-6 h-6 animate-spin" *ngIf="isLoadingBooks" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
       
-      <div *ngIf="books.length === 0" class="col-span-full text-center py-12 text-dracula-comment border border-dashed border-dracula-cur rounded-xl">
-        No books available in the system yet.
+      <div *ngIf="books.length === 0 && !isLoadingBooks" class="text-center py-12 text-dracula-comment border border-dashed border-dracula-cur rounded-xl">
+        {{ searchQuery ? 'No books match your search.' : 'No books available in the system yet.' }}
       </div>
     </div>
 
     <!-- Tab 2: Requests / Assignments -->
     <div *ngIf="activeTab === 'requests'" class="space-y-4 animate-fade-in">
-      <div *ngFor="let req of requests" class="glass-panel p-6 rounded-xl flex items-center justify-between transition-all hover:-translate-y-0.5">
+      <div *ngFor="let req of filteredRequests" class="glass-panel p-6 rounded-xl flex items-center justify-between transition-all hover:-translate-y-0.5">
         <div>
-          <h4 class="font-semibold text-dracula-fg text-lg">Book #{{ req.book_id }} requested by <span class="text-dracula-purple">{{ req.username }}</span></h4>
+          <h4 class="font-semibold text-dracula-fg text-lg"><span class="text-dracula-cyan">{{ req.book_title || 'Book #' + req.book_id }}</span> requested by <span class="text-dracula-purple">{{ req.username }}</span></h4>
           <p class="text-xs text-dracula-comment mt-1">Requested on: {{ req.request_date | date:'medium' }}</p>
           <p class="text-sm text-dracula-pink mt-1 font-medium">Duration: {{ req.duration_weeks }} Week(s)</p>
           <span class="inline-block mt-2 px-2 py-1 text-xs font-bold rounded" 
@@ -69,8 +92,8 @@
         </div>
       </div>
       
-      <div *ngIf="requests.length === 0" class="text-center py-12 text-dracula-comment border border-dashed border-dracula-cur rounded-xl">
-        No requests available.
+      <div *ngIf="filteredRequests.length === 0" class="text-center py-12 text-dracula-comment border border-dashed border-dracula-cur rounded-xl">
+        {{ searchQuery ? 'No requests match your search.' : 'No requests available.' }}
       </div>
     </div>
   </main>
@@ -132,9 +155,8 @@
   </div>
 </div>
 
-<!-- QR Code Modal (Printed logic included) -->
+<!-- QR Code Modal -->
 <div *ngIf="showQrModal" class="fixed inset-0 z-50 flex items-center justify-center print-area">
-  <!-- Backdrop -->
   <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" (click)="closeQrModal()" style="print-color-adjust: exact;"></div>
   
   <div class="glass-panel rounded-2xl w-full max-w-sm relative z-10 p-8 transform transition-all shadow-2xl flex flex-col items-center border border-dracula-purple/30 bg-dracula-bg">
