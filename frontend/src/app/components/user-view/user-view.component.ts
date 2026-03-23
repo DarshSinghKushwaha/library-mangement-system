@@ -128,7 +128,7 @@ export class UserViewComponent implements OnInit, OnDestroy, AfterViewInit {
           }
         });
       },
-      { root: null, rootMargin: '0px 200px 0px 0px', threshold: 0.1 }
+      { root: null, rootMargin: '0px 0px 200px 0px', threshold: 0.1 }
     );
     this.observeSentinel();
   }

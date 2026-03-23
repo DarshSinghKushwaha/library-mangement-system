@@ -11,18 +11,6 @@
       <p class="text-dracula-comment mt-2">Welcome! Please login to continue.</p>
     </div>
 
-    <!-- Quick login switchers for demonstration -->
-    <div class="flex gap-4 mb-6 justify-center">
-      <button type="button" (click)="setRole('admin')" 
-              class="px-4 py-2 border border-dracula-purple text-dracula-purple rounded-lg hover:bg-dracula-purple hover:text-dracula-bg transition-colors font-medium">
-        Load Admin Info
-      </button>
-      <button type="button" (click)="setRole('user')"
-              class="px-4 py-2 border border-dracula-cyan text-dracula-cyan rounded-lg hover:bg-dracula-cyan hover:text-dracula-bg transition-colors font-medium">
-        Load User Info
-      </button>
-    </div>
-
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
       
       <div *ngIf="error" class="p-3 bg-dracula-red bg-opacity-20 border border-dracula-red text-dracula-red rounded-lg text-sm text-center">

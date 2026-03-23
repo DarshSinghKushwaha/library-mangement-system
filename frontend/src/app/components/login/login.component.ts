@@ -21,17 +21,9 @@ export class LoginComponent {
     private router: Router
   ) {
     this.loginForm = this.fb.group({
-      username: ['admin', Validators.required],
-      password: ['password', Validators.required]
+      username: ['', Validators.required],
+      password: ['', Validators.required]
     });
-  }
-
-  setRole(role: 'admin' | 'user') {
-    if (role === 'admin') {
-      this.loginForm.patchValue({ username: 'admin', password: 'password' });
-    } else {
-      this.loginForm.patchValue({ username: 'alice', password: 'password' });
-    }
   }
 
   onSubmit() {
@@ -45,7 +37,11 @@ export class LoginComponent {
           }
         },
         error: (err) => {
-          this.error = 'Invalid username or password';
+          if (err.status === 401) {
+            this.error = err.error?.detail || 'Invalid username or password';
+          } else {
+            this.error = `Server Error (${err.status}): Please check if the backend is running.`;
+          }
         }
       });
     }

@@ -1,24 +1,21 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   content: [
     "./src/**/*.{html,ts}",
   ],
   theme: {
     extend: {
       colors: {
-        dracula: {
-          bg: '#282a36',
-          cur: '#44475a',
-          fg: '#f8f8f2',
-          comment: '#6272a4',
-          cyan: '#8be9fd',
-          green: '#50fa7b',
-          orange: '#ffb86c',
-          pink: '#ff79c6',
-          purple: '#bd93f9',
-          red: '#ff5555',
-          yellow: '#f1fa8c'
-        }
+        bg: 'var(--color-bg)',
+        cur: 'var(--color-cur)',
+        fg: 'var(--color-fg)',
+        comment: 'var(--color-comment)',
+        primary: 'var(--color-primary)',
+        secondary: 'var(--color-secondary)',
+        success: 'var(--color-success)',
+        warning: 'var(--color-warning)',
+        error: 'var(--color-error)'
       }
     },
   },

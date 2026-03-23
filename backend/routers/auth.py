@@ -21,9 +21,14 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 @router.post("/login", response_model=Token)
 def login(request: LoginRequest):
+    print(f"Login attempt for: {request.username}")
     user = users_db.get(request.username)
-    if not user or user["password"] != request.password:
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+    if not user:
+        print(f"User {request.username} not found")
+        raise HTTPException(status_code=401, detail="User not found")
+    if user["password"] != request.password:
+        print(f"Invalid password for {request.username}: expected {user['password']}, got {request.password}")
+        raise HTTPException(status_code=401, detail="Invalid password")
     
     access_token = create_access_token(data={"sub": user["username"], "role": user["role"]}, expires_delta=timedelta(hours=24))
     return {"access_token": access_token, "token_type": "bearer", "role": user["role"]}

@@ -9,7 +9,7 @@
           </div>
           <span class="font-bold text-xl tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-dracula-fg to-dracula-cyan">User Dashboard</span>
         </div>
-        <button (click)="logout()" class="text-dracula-comment hover:text-dracula-pink transition-colors font-medium">Logout</button>
+        <button (click)="logout()" class="px-5 py-2 bg-dracula-cur border border-dracula-comment text-dracula-fg hover:bg-dracula-cyan hover:border-dracula-cyan hover:text-dracula-bg transition-all font-bold rounded-lg text-sm shadow-sm">Logout</button>
       </div>
     </div>
   </nav>
@@ -53,31 +53,41 @@
       {{ requestError }}
     </div>
 
-    <!-- Tab 1: Available Books — Horizontal Infinite Scroll -->
+    <!-- Tab 1: Available Books — Vertical Infinite Scroll Grid -->
     <div *ngIf="activeTab === 'available'" class="animate-fade-in">
-      <div class="flex gap-6 overflow-x-auto pb-4 scroll-smooth" style="scrollbar-width: thin; scrollbar-color: #6272a4 transparent;">
-        <div *ngFor="let book of books; trackBy: trackByBookId" class="flex-shrink-0 w-[300px]">
-          <app-book-card [book]="book" 
-                         role="user" 
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div *ngFor="let book of books; trackBy: trackByBookId">
+          <app-book-card [book]="book"
+                         role="user"
                          (requestBook)="openRequestModal($event)">
           </app-book-card>
         </div>
-
-        <!-- Sentinel for Intersection Observer -->
-        <div #bookSentinel class="flex-shrink-0 w-16 flex items-center justify-center" *ngIf="hasMore">
-          <div class="flex flex-col items-center gap-2 text-dracula-comment">
-            <svg class="w-6 h-6 animate-spin" *ngIf="isLoadingBooks" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          </div>
-        </div>
       </div>
-      
+
+      <!-- Loading spinner row -->
+      <div *ngIf="isLoadingBooks" class="flex items-center justify-center py-8">
+        <svg class="w-8 h-8 animate-spin text-dracula-cyan" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="ml-3 text-dracula-comment text-sm">Loading more books…</span>
+      </div>
+
+      <!-- End-of-list indicator -->
+      <div *ngIf="!hasMore && books.length > 0" class="flex items-center justify-center py-6 text-dracula-comment text-sm gap-2">
+        <span class="block h-px w-16 bg-dracula-cur"></span>
+        All {{ totalBooks }} books loaded
+        <span class="block h-px w-16 bg-dracula-cur"></span>
+      </div>
+
+      <!-- Sentinel for Intersection Observer (vertical) -->
+      <div #bookSentinel class="h-4" *ngIf="hasMore"></div>
+
       <div *ngIf="books.length === 0 && !isLoadingBooks" class="text-center py-12 text-dracula-comment border border-dashed border-dracula-cur rounded-xl">
         {{ searchQuery ? 'No books match your search.' : 'No books available in the system right now.' }}
       </div>
     </div>
+
 
     <!-- Tab 2: Assigned Books — Horizontal Scroll (client-filtered, not paginated) -->
     <div *ngIf="activeTab === 'assigned'" class="animate-fade-in">

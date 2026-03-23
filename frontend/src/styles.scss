@@ -3,33 +3,65 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-bg: #f1f5f9;  /* Light blue-slate background */
+    --color-cur: #ffffff;
+    --color-fg: #0f172a;
+    --color-comment: #475569;
+    --color-primary: #f97316; /* Standard vibrant Bhagwa */
+    --color-secondary: #ea580c;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-error: #ef4444;
+    --glass-bg: #ffffff;
+    --glass-border: #e2e8f0;
+    --glass-shadow: rgba(0, 0, 0, 0.05);
+    --card-bg: #ffffff;
+    --sidebar-bg: #ffffff;
+  }
+  .dark {
+    --color-bg: #020617;  /* Deep Night Navy */
+    --color-cur: #0f172a;  /* Surface Navy */
+    --color-fg: #f8fafc;
+    --color-comment: #94a3b8;
+    --color-primary: #fb923c; /* Brighter orange for dark mode */
+    --color-secondary: #f97316;
+    --color-success: #34d399;
+    --color-warning: #fbbf24;
+    --color-error: #f87171;
+    --glass-bg: rgba(15, 23, 42, 0.8);
+    --glass-border: rgba(51, 65, 85, 0.5);
+    --glass-shadow: rgba(0, 0, 0, 0.4);
+    --card-bg: #0f172a;
+    --sidebar-bg: #0f172a;
+  }
   body {
-    @apply bg-dracula-bg text-dracula-fg m-0 p-0 font-sans;
+    @apply bg-bg text-fg m-0 p-0 font-sans transition-colors duration-300;
   }
 }
 
-/* Custom modern scrollbar for a swift UI */
+/* Custom modern scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #282a36; 
+  background: var(--color-bg); 
 }
 ::-webkit-scrollbar-thumb {
-  background: #6272a4; 
+  background: var(--color-comment); 
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #bd93f9; 
+  background: var(--color-primary); 
 }
 
-/* Beautiful modern glassmorphism effect for cards if needed */
+/* Beautiful modern glassmorphism effect for cards */
 .glass-panel {
-  background: rgba(68, 71, 90, 0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(248, 248, 242, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 20px 0 var(--glass-shadow);
 }
 
 /* Basic printing styles for QR code */
