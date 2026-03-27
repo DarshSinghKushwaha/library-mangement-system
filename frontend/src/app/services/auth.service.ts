@@ -25,6 +25,7 @@ export class AuthService {
         if (response.access_token) {
           localStorage.setItem('access_token', response.access_token);
           localStorage.setItem('role', response.role);
+          localStorage.setItem('username', response.username);
           this.roleSubject.next(response.role);
         }
       })
@@ -34,6 +35,7 @@ export class AuthService {
   logout() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('role');
+    localStorage.removeItem('username');
     this.roleSubject.next(null);
     this.router.navigate(['/login']);
   }

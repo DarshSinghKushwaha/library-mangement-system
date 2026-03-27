@@ -10,11 +10,13 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     role: str
+    username: str
 
 class BookBase(BaseModel):
     title: str
     author: str
     category: str
+    quantity: int = 1
 
 class BookCreate(BookBase):
     pass
@@ -23,12 +25,13 @@ class BookResponse(BookBase):
     id: int
     is_issued: bool
     issued_to: Optional[str] = None
-    issued_date: Optional[str] = None
-    expected_return_date: Optional[str] = None
+    issued_date: Optional[datetime] = None
+    expected_return_date: Optional[datetime] = None
 
 class IssueRequestCreate(BaseModel):
     book_id: int
     duration_weeks: int
+    username: Optional[str] = None
 
 class IssueRequestResponse(BaseModel):
     id: int

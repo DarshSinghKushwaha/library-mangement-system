@@ -1,0 +1,85 @@
+<div class="min-h-screen bg-bg text-fg flex items-center justify-center p-4">
+  <div class="glass-panel w-full max-w-md p-8 rounded-[12px] shadow-2xl relative border border-cur animate-fade-in-down bg-bg overflow-hidden group">
+    <!-- Accent Line -->
+    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
+    
+    <!-- Logo area -->
+    <div class="flex justify-center mb-6">
+      <img src="/assets/oges-logo.png" alt="OgesOne" class="h-12 w-auto object-contain">
+    </div>
+
+    <!-- Header -->
+    <h1 class="text-2xl font-bold text-center text-fg mb-1">Book Request</h1>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-12 gap-4">
+      <div class="relative w-12 h-12">
+        <div class="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+        <div class="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin-fast"></div>
+      </div>
+      <p class="text-comment font-medium animate-pulse text-sm">Validating physical book...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !isLoading" class="bg-error/10 border border-error/50 text-error p-4 rounded-[10px] my-6 text-sm text-center">
+      {{ error }}
+      <div class="mt-4">
+        <button [routerLink]="['/login']" class="px-4 py-2 bg-transparent border border-error/50 hover:bg-error hover:text-white transition-colors rounded-[8px] font-medium text-xs">Return Home</button>
+      </div>
+    </div>
+    
+    <!-- Success State -->
+    <div *ngIf="success && !isLoading" class="text-center my-8">
+      <div class="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4 text-success">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      </div>
+      <h3 class="text-xl font-bold text-fg mb-2">Request Submitted!</h3>
+      <p class="text-comment text-sm mb-6">Your request for <span class="text-primary font-bold">{{ book?.title }}</span> has been sent to the admin. You may close this page.</p>
+      <button [routerLink]="['/user']" class="w-full py-3 bg-primary hover:bg-secondary text-white font-bold rounded-[10px] transition-colors shadow-md text-sm">View My Dashboard</button>
+    </div>
+
+    <!-- Form State -->
+    <div *ngIf="book && !isLoading && !success && !error">
+      <p class="text-center text-comment text-sm mb-6">You scanned <span class="font-bold text-fg">{{ book.title }}</span> by {{ book.author }}. Please enter your details to request it.</p>
+      
+      <form (submit)="submitRequest()" class="flex flex-col gap-4">
+        <div class="p-4 bg-cur/50 rounded-[10px] border border-cur mb-2">
+           <div class="flex justify-between items-center mb-1">
+             <span class="text-[10px] uppercase font-bold text-comment tracking-wider">Status</span>
+             <span class="text-xs font-bold" [ngClass]="book.is_issued ? 'text-error' : 'text-success'">{{ book.is_issued ? 'Currently Unavailable' : 'Available in Library' }}</span>
+           </div>
+           <p class="text-sm font-semibold text-fg">{{ book.category }}</p>
+        </div>
+
+        <!-- Login Credentials if not authenticated as user -->
+        <ng-container *ngIf="!isLoggedInAsUser">
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-comment">Username</label>
+            <input type="text" [(ngModel)]="requestData.username" name="username" required
+                   class="px-4 py-2.5 bg-cur border border-transparent focus:border-primary rounded-[10px] outline-none text-fg transition-colors">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-comment">Password</label>
+            <input type="password" [(ngModel)]="requestData.password" name="password" required
+                   class="px-4 py-2.5 bg-cur border border-transparent focus:border-primary rounded-[10px] outline-none text-fg transition-colors">
+          </div>
+        </ng-container>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-comment">Duration to Borrow (Weeks)</label>
+          <input type="number" min="1" max="52" [(ngModel)]="requestData.duration_weeks" name="duration" required
+                 class="px-4 py-2.5 bg-cur border border-transparent focus:border-primary rounded-[10px] outline-none text-fg transition-colors text-lg font-bold">
+        </div>
+
+        <button type="submit" [disabled]="isSubmitting" 
+                class="w-full mt-4 py-3 bg-primary hover:bg-secondary text-white font-bold rounded-[10px] transition-all shadow-md active:scale-95 disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center gap-2">
+          <svg *ngIf="isSubmitting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ isSubmitting ? 'Processing...' : 'Submit Request' }}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

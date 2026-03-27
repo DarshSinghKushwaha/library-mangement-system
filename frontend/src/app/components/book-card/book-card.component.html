@@ -5,10 +5,15 @@
   <div class="p-4 flex flex-col flex-grow">
     <div class="flex justify-between items-start mb-3">
       <h3 class="font-bold text-[1.15rem] leading-tight text-fg group-hover:text-primary transition-colors">{{ book.title }}</h3>
-      <span class="px-2 py-1 text-[10px] font-bold rounded-md flex-shrink-0 ml-2 shadow-sm"
-            [ngClass]="book.is_issued ? 'bg-cur text-fg border border-comment' : 'bg-success text-white'">
-        {{ book.is_issued ? 'Issued' : 'Available' }}
-      </span>
+      <div class="flex flex-col items-end gap-1">
+        <span class="px-2 py-1 text-[10px] font-bold rounded-md flex-shrink-0 ml-2 shadow-sm"
+              [ngClass]="book.is_issued ? 'bg-cur text-fg border border-comment' : 'bg-success text-white'">
+          {{ book.is_issued ? 'Issued' : 'Available' }}
+        </span>
+        <span *ngIf="role === 'admin'" class="px-2 py-1 text-[10px] font-bold rounded-md flex-shrink-0 ml-2 shadow-sm bg-primary/10 text-primary border border-primary/20">
+          Qty: {{ book.quantity || 1 }}
+        </span>
+      </div>
     </div>
     
     <p class="text-comment text-xs mb-1">by <span class="text-fg opacity-80">{{ book.author }}</span></p>

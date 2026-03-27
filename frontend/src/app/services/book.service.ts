@@ -34,7 +34,12 @@ export class BookService {
   }
 
   requestBook(bookId: number, durationWeeks: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/requests`, { book_id: bookId, duration_weeks: durationWeeks });
+    const username = localStorage.getItem('username') || 'Unknown User';
+    return this.http.post(`${this.apiUrl}/requests`, { 
+      book_id: bookId, 
+      duration_weeks: durationWeeks,
+      username: username 
+    });
   }
 
   directIssue(bookId: number, issueData: any): Observable<any> {

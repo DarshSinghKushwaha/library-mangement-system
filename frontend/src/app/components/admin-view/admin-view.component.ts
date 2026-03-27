@@ -16,7 +16,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
   styleUrls: []
 })
 export class AdminViewComponent implements OnInit, OnDestroy, AfterViewInit {
-  activeTab: 'books' | 'activity' = 'books';
+  activeTab: 'dashboard' | 'books' | 'activity' = 'dashboard';
   searchFilter: string = 'all';
   isSidebarCollapsed: boolean = false;
 
@@ -26,14 +26,26 @@ export class AdminViewComponent implements OnInit, OnDestroy, AfterViewInit {
   loggedInUser: string = 'Admin';
   isDarkMode: boolean = false;
 
-  // Paginated books state
+  // Infinite scroll books state
   allBooksCache: any[] = [];
   books: any[] = [];
   isLoadingBooks = false;
   totalBooks = 0;
+  
+  loadedCount: number = 12;
+  hasMore: boolean = true;
+  private bookObserver!: IntersectionObserver;
+  @ViewChild('adminBookSentinel') adminBookSentinel!: ElementRef;
 
   // Requests (not paginated)
   requests: any[] = [];
+  
+  // Dashboard Stats
+  dashboardTotalBooks = 0;
+  dashboardAvailableBooks = 0;
+  dashboardIssuedBooks = 0;
+  categoryStats: any[] = [];
+  bestsellers: any[] = [];
 
   // Search
   searchQuery: string = '';
@@ -60,6 +72,7 @@ export class AdminViewComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   activityItems: any[] = [];
+  overdueItems: any[] = [];
 
   users: string[] = [];
 
@@ -68,7 +81,7 @@ export class AdminViewComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Add Book state
   showAddBookModal = false;
-  newBook = { title: '', author: '', category: '' };
+  newBook = { title: '', author: '', category: '', quantity: 1 };
 
   // Direct Issue state
   showIssueModal = false;
@@ -82,7 +95,7 @@ export class AdminViewComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit() {
-    this.loggedInUser = localStorage.getItem('username') || localStorage.getItem('role') || 'Admin';
+    this.loggedInUser = localStorage.getItem('username') || 'Admin';
     if (this.loggedInUser) {
         this.loggedInUser = this.loggedInUser.charAt(0).toUpperCase() + this.loggedInUser.slice(1);
     }
@@ -108,10 +121,11 @@ export class AdminViewComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    // Numbered pagination replaces intersection observer
+    this.setupIntersectionObserver();
   }
 
   ngOnDestroy() {
+    this.bookObserver?.disconnect();
     this.searchSubject.complete();
   }
 
@@ -119,9 +133,17 @@ export class AdminViewComponent implements OnInit, OnDestroy, AfterViewInit {
     this.searchSubject.next(this.searchQuery);
   }
 
+  setActiveTab(tab: 'dashboard' | 'books' | 'activity') {
+    this.activeTab = tab;
+    if (tab === 'books') {
+      setTimeout(() => this.observeSentinel(), 100);
+    }
+  }
+
   resetAndReload() {
     this.books = [];
-    this.currentPage = 1;
+    this.loadedCount = 12;
+    this.hasMore = true;
     this.allBooksCache = []; // Force fresh fetch 
     this.loadBooksPaginated();
   }
@@ -140,6 +162,7 @@ export class AdminViewComponent implements OnInit, OnDestroy, AfterViewInit {
     this.bookService.getBooks().subscribe({
       next: (res) => {
         this.allBooksCache = res;
+        this.computeDashboardStats();
         this.applyLocalPagination();
       },
       error: () => {
@@ -161,10 +184,10 @@ export class AdminViewComponent implements OnInit, OnDestroy, AfterViewInit {
       ) : this.allBooksCache;
 
       this.totalBooks = filtered.length;
-
-      // Slice for current page (e.g. 0 to 8)
-      const offset = (this.currentPage - 1) * this.itemsPerPage;
-      this.books = filtered.slice(offset, offset + this.itemsPerPage);
+      this.hasMore = this.loadedCount < this.totalBooks;
+      
+      // Slice for infinite scroll (0 to loadedCount)
+      this.books = filtered.slice(0, this.loadedCount);
     } catch (e) {
       console.error('Error applying pagination filter: ', e);
     } finally {
@@ -172,55 +195,98 @@ export class AdminViewComponent implements OnInit, OnDestroy, AfterViewInit {
       setTimeout(() => {
           this.isLoadingBooks = false;
           this.cdr.detectChanges();
-      }, 400);
+          this.observeSentinel();
+      }, 200);
     }
   }
 
-  goToPage(page: number) {
-    if (page < 1 || (this.totalBooks && page > Math.ceil(this.totalBooks / this.itemsPerPage))) return;
-    this.currentPage = page;
+  computeDashboardStats() {
+    this.dashboardTotalBooks = this.allBooksCache.length;
+    this.dashboardIssuedBooks = this.allBooksCache.filter(b => b.is_issued).length;
+    this.dashboardAvailableBooks = this.dashboardTotalBooks - this.dashboardIssuedBooks;
     
-    // Slight artificial delay to trigger smooth loader properly on instant cache hits
-    this.isLoadingBooks = true; 
-    setTimeout(() => this.applyLocalPagination(), 50);
+    // Calculate Category Distribution
+    const cats: { [key: string]: { total: number, issued: number } } = {};
+    this.allBooksCache.forEach(b => {
+      const c = b.category || 'Other';
+      if (!cats[c]) cats[c] = { total: 0, issued: 0 };
+      cats[c].total++;
+      if (b.is_issued) cats[c].issued++;
+    });
+    
+    this.categoryStats = Object.keys(cats).map(name => ({
+      name,
+      total: cats[name].total,
+      issued: cats[name].issued,
+      available: cats[name].total - cats[name].issued,
+      percentage: cats[name].total > 0 ? Math.round((cats[name].issued / cats[name].total) * 100) : 0
+    })).sort((a, b) => b.total - a.total);
+    
+    // Calculate Bestsellers (Categories with highest issue rate)
+    this.bestsellers = [...this.categoryStats]
+       .filter(c => c.issued > 0)
+       .sort((a, b) => b.issued - a.issued)
+       .slice(0, 5);
   }
 
-  get totalPages(): number {
-    return Math.ceil(this.totalBooks / this.itemsPerPage) || 1;
+  loadMoreItems() {
+    if (this.isLoadingBooks || !this.hasMore) return;
+    this.isLoadingBooks = true;
+    this.loadedCount += 12;
+    this.applyLocalPagination();
+  }
+
+  private setupIntersectionObserver() {
+    this.bookObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting && !this.isLoadingBooks && this.hasMore) {
+            this.loadMoreItems();
+          }
+        });
+      },
+      { 
+        root: null, 
+        rootMargin: '400px', 
+        threshold: 0.1 
+      }
+    );
+    setTimeout(() => this.observeSentinel(), 500);
+  }
+
+  private observeSentinel() {
+    if (this.adminBookSentinel?.nativeElement) {
+      this.bookObserver?.observe(this.adminBookSentinel.nativeElement);
+    }
   }
 
   // --- Activity (Requests + Issuances) ---
   loadActivity() {
-    // Fetch requests and all books to find active issuances
     this.bookService.getRequests().subscribe(reqs => {
       this.bookService.getBooks().subscribe(books => {
-        const issuances = books
-          .filter(b => b.is_issued)
-          .map(b => ({
-            id: -1, // No request ID for direct issuance
-            book_id: b.id,
-            book_title: b.title,
-            category: b.category,
-            username: b.issued_to,
-            request_date: b.issued_date,
-            expected_return_date: b.expected_return_date,
-            status: 'active',
-            display_status: 'Currently Issued'
-          }));
-
-        const requests = reqs.map(r => {
+        const now = new Date();
+        
+        this.activityItems = reqs.map(r => {
           const matchedBook = books.find(b => b.id === r.book_id);
+          const dueDate = r.expected_return_date ? new Date(r.expected_return_date) : null;
+          const isOverdue = r.status === 'approved' && dueDate && dueDate < now;
+          
+          let displayStatus = r.status.charAt(0).toUpperCase() + r.status.slice(1);
+          if (r.status === 'approved') {
+            displayStatus = isOverdue ? 'OVERDUE' : 'Currently Issued';
+          }
+
           return {
             ...r,
             category: matchedBook ? matchedBook.category : '',
-            display_status: r.status.charAt(0).toUpperCase() + r.status.slice(1)
+            status: isOverdue ? 'overdue' : r.status,
+            display_status: displayStatus
           };
-        });
-
-        // Combine and sort by date descending
-        this.activityItems = [...requests, ...issuances].sort((a, b) => 
+        }).sort((a, b) => 
           new Date(b.request_date || 0).getTime() - new Date(a.request_date || 0).getTime()
         );
+        
+        this.overdueItems = this.activityItems.filter(i => i.status === 'overdue');
         this.cdr.detectChanges();
       });
     });
@@ -249,7 +315,7 @@ export class AdminViewComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // --- Add Book Flow ---
   openAddBookModal() {
-    this.newBook = { title: '', author: '', category: '' };
+    this.newBook = { title: '', author: '', category: '', quantity: 1 };
     this.showAddBookModal = true;
   }
 

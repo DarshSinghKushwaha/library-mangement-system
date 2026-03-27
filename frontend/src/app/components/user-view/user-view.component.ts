@@ -16,8 +16,12 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 })
 export class UserViewComponent implements OnInit, OnDestroy, AfterViewInit {
   activeTab: 'available' | 'assigned' = 'available';
+  isSidebarCollapsed: boolean = false;
   searchQuery: string = '';
   private searchSubject = new Subject<string>();
+  
+  isDarkMode: boolean = false;
+  loggedInUser: string = 'User';
 
   // Paginated books state
   books: any[] = [];
@@ -55,7 +59,19 @@ export class UserViewComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit() {
-    this.username = this.authService.getRole() === 'user' ? 'alice' : 'user';
+    this.loggedInUser = localStorage.getItem('username') || 'User';
+    if (this.loggedInUser) {
+        this.loggedInUser = this.loggedInUser.charAt(0).toUpperCase() + this.loggedInUser.slice(1);
+    }
+
+    this.isDarkMode = localStorage.getItem('theme') === 'dark';
+    if (this.isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
+    this.username = localStorage.getItem('username');
     this.loadBooksPaginated();
     this.loadAssignedBooks();
 
@@ -78,6 +94,13 @@ export class UserViewComponent implements OnInit, OnDestroy, AfterViewInit {
 
   onSearchChange() {
     this.searchSubject.next(this.searchQuery);
+  }
+
+  setActiveTab(tab: 'available' | 'assigned') {
+    this.activeTab = tab;
+    if (tab === 'available') {
+      setTimeout(() => this.observeSentinel(), 100);
+    }
   }
 
   resetAndReload() {
@@ -128,7 +151,11 @@ export class UserViewComponent implements OnInit, OnDestroy, AfterViewInit {
           }
         });
       },
-      { root: null, rootMargin: '0px 0px 200px 0px', threshold: 0.1 }
+      { 
+        root: null, 
+        rootMargin: '400px', 
+        threshold: 0.1 
+      }
     );
     this.observeSentinel();
   }
@@ -178,5 +205,16 @@ export class UserViewComponent implements OnInit, OnDestroy, AfterViewInit {
 
   logout() {
     this.authService.logout();
+  }
+
+  toggleTheme() {
+    this.isDarkMode = !this.isDarkMode;
+    if (this.isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
   }
 }

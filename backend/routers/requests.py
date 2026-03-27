@@ -1,72 +1,108 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 from typing import List
+from datetime import datetime, timedelta
+
+from database_sql import get_db
+import models
 from schemas import IssueRequestCreate, IssueRequestResponse, RequestAction
-from database import requests_db, books_db, users_db
-from datetime import datetime
 
 router = APIRouter()
 
 @router.get("/", response_model=List[IssueRequestResponse])
-def get_requests():
-    # Enrich each request with book_title
-    for req in requests_db:
-        if "book_title" not in req or req["book_title"] is None:
-            book = next((b for b in books_db if b["id"] == req["book_id"]), None)
-            req["book_title"] = book["title"] if book else None
-    return requests_db
+def get_requests(db: Session = Depends(get_db)):
+    requests = db.query(models.Request).all()
+    # Enrich manual responses if needed, though SQLAlchemy relationship handles a lot.
+    # The current schema expects some extra fields like book_title.
+    enriched = []
+    for req in requests:
+        book_title = req.book.title if req.book else None
+        
+        # Pydantic will serialize datetime to ISO string automatically
+        # Or we can manually map it if strictly needed, but Pydantic handles ORM conversion.
+        enriched.append({
+            "id": req.id,
+            "book_id": req.book_id,
+            "book_title": book_title,
+            "username": req.username,
+            "status": req.status,
+            "request_date": req.request_date.isoformat() if req.request_date else None,
+            "duration_weeks": req.duration_weeks,
+            "expected_return_date": req.expected_return_date.isoformat() if req.expected_return_date else None
+        })
+    return enriched
 
 @router.post("/", response_model=IssueRequestResponse)
-def create_request(req: IssueRequestCreate, username: str = "user1"):
-    # In a real app, username would come from the JWT token
+def create_request(req: IssueRequestCreate, db: Session = Depends(get_db)):
+    username = req.username or "Unknown User"
     
     # Check if book exists
-    book = next((b for b in books_db if b["id"] == req.book_id), None)
+    book = db.query(models.Book).filter(models.Book.id == req.book_id).first()
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
         
-    if book["is_issued"]:
+    if book.is_issued:
         raise HTTPException(status_code=400, detail="Book is already issued")
         
-    new_id = max((r["id"] for r in requests_db), default=0) + 1
+    new_request = models.Request(
+        book_id=req.book_id,
+        username=username,
+        status="pending",
+        request_date=datetime.now(),
+        duration_weeks=req.duration_weeks,
+        expected_return_date=None
+    )
     
-    new_request = {
-        "id": new_id,
-        "book_id": req.book_id,
-        "book_title": book["title"],
-        "username": username,
-        "status": "pending",
-        "request_date": datetime.now().isoformat(),
-        "duration_weeks": req.duration_weeks,
+    db.add(new_request)
+    db.commit()
+    db.refresh(new_request)
+    
+    return {
+        "id": new_request.id,
+        "book_id": new_request.book_id,
+        "book_title": book.title,
+        "username": new_request.username,
+        "status": new_request.status,
+        "request_date": new_request.request_date.isoformat() if new_request.request_date else None,
+        "duration_weeks": new_request.duration_weeks,
         "expected_return_date": None
     }
-    
-    requests_db.append(new_request)
-    return new_request
 
 @router.put("/{request_id}")
-def update_request_status(request_id: int, action: RequestAction):
-    req = next((r for r in requests_db if r["id"] == request_id), None)
+def update_request_status(request_id: int, action: RequestAction, db: Session = Depends(get_db)):
+    req = db.query(models.Request).filter(models.Request.id == request_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Request not found")
         
-    if req["status"] != "pending":
+    if req.status != "pending":
         raise HTTPException(status_code=400, detail="Request is already processed")
         
-    book = next((b for b in books_db if b["id"] == req["book_id"]), None)
+    book = req.book
     
     if action.action == "approve":
-        req["status"] = "approved"
+        req.status = "approved"
         if book:
-            book["is_issued"] = True
-            book["issued_to"] = req["username"]
-            book["issued_date"] = datetime.now().isoformat()
-            from datetime import timedelta
-            return_time = datetime.now() + timedelta(weeks=req.get("duration_weeks", 2))
-            book["expected_return_date"] = return_time.isoformat()
-            req["expected_return_date"] = return_time.isoformat()
+            book.is_issued = True
+            book.issued_to = req.username
+            book.issued_date = datetime.now()
+            
+            return_time = datetime.now() + timedelta(weeks=req.duration_weeks)
+            book.expected_return_date = return_time
+            req.expected_return_date = return_time
+            
     elif action.action == "reject":
-        req["status"] = "rejected"
+        req.status = "rejected"
     else:
         raise HTTPException(status_code=400, detail="Invalid action")
         
-    return {"message": f"Request {action.action}d successfully", "request": req}
+    db.commit()
+    db.refresh(req)
+    
+    return {
+        "message": f"Request {action.action}d successfully", 
+        "request": {
+            "id": req.id,
+            "status": req.status,
+            "expected_return_date": req.expected_return_date.isoformat() if req.expected_return_date else None
+        }
+    }

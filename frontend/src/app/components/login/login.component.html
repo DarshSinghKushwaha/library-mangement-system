@@ -1,40 +1,96 @@
-<div class="min-h-screen flex items-center justify-center bg-dracula-bg bg-opacity-90 relative overflow-hidden">
+<div class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#1E88E5] to-[#4DD0E1] relative overflow-hidden font-sans p-6">
   
-  <!-- Decorative background elements -->
-  <div class="absolute -top-32 -left-32 w-96 h-96 bg-dracula-purple rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-  <div class="absolute top-1/2 -right-32 w-96 h-96 bg-dracula-pink rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-  <div class="absolute -bottom-32 left-1/2 w-96 h-96 bg-dracula-cyan rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+  <!-- Subtle Overlay Grids -->
+  <div class="absolute inset-0 bg-white/5 pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0); background-size: 24px 24px;"></div>
 
-  <div class="w-full max-w-md p-8 glass-panel rounded-2xl shadow-xl z-10">
-    <div class="text-center mb-10">
-      <h1 class="text-3xl font-bold text-dracula-fg tracking-wide">Library System</h1>
-      <p class="text-dracula-comment mt-2">Welcome! Please login to continue.</p>
+  <!-- Centered "Okayish" Sized Login Card -->
+  <div class="w-full max-w-4xl flex flex-col md:flex-row shadow-2xl rounded-2xl overflow-hidden z-20 animate-fade-in-down min-h-[520px] bg-white">
+    
+    <!-- Left Side: Dark Navy/Slate Brand Panel -->
+    <div class="w-full md:w-[42%] bg-[#3D4F72] p-10 flex flex-col items-center justify-center relative">
+      <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 flex items-center justify-center w-full aspect-square transition-transform hover:scale-105 duration-300">
+        <img src="/assets/oges-logo.png" alt="OgesOne" 
+             class="max-w-full h-auto drop-shadow-2xl">
+      </div>
+      <p class="mt-8 text-white/40 text-[10px] font-bold tracking-[0.2em] uppercase">Digital Resource Management</p>
     </div>
 
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
-      
-      <div *ngIf="error" class="p-3 bg-dracula-red bg-opacity-20 border border-dracula-red text-dracula-red rounded-lg text-sm text-center">
-        {{ error }}
+    <!-- Right Side: Clean White Login Form -->
+    <div class="w-full md:w-[58%] bg-white p-10 md:p-16 flex flex-col justify-center">
+      <div class="mb-10 text-left">
+        <h2 class="text-slate-800 text-3xl font-extrabold tracking-tight mb-2">Welcome !</h2>
+        <p class="text-slate-400 text-sm font-medium">Sign in to continue to digital portal.</p>
       </div>
 
-      <div class="flex flex-col gap-2">
-        <label for="username" class="text-sm font-medium text-dracula-fg">Username</label>
-        <input type="text" id="username" formControlName="username" 
-               class="px-4 py-3 bg-dracula-cur border-none focus:ring-2 focus:ring-dracula-purple rounded-lg outline-none text-dracula-fg transition-all shadow-inner"
-               placeholder="Enter your username">
-      </div>
-      
-      <div class="flex flex-col gap-2">
-        <label for="password" class="text-sm font-medium text-dracula-fg">Password</label>
-        <input type="password" id="password" formControlName="password"
-               class="px-4 py-3 bg-dracula-cur border-none focus:ring-2 focus:ring-dracula-purple rounded-lg outline-none text-dracula-fg transition-all shadow-inner"
-               placeholder="••••••••">
-      </div>
-      
-      <button type="submit" [disabled]="!loginForm.valid"
-              class="mt-4 py-3 px-6 bg-gradient-to-r from-dracula-purple to-dracula-pink text-dracula-bg font-bold rounded-lg shadow-lg hover:shadow-dracula-purple/50 transform hover:-translate-y-0.5 transition-all w-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-dracula-purple focus:ring-offset-dracula-bg disabled:opacity-50 disabled:cursor-not-allowed">
-        SIGN IN
-      </button>
-    </form>
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        
+        <div *ngIf="error" class="p-3.5 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-sm text-center font-semibold animate-shake">
+          {{ error }}
+        </div>
+
+        <!-- Username Field -->
+        <div class="space-y-2">
+          <label class="text-slate-700 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+            Username <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative group">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#00BFA5] transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            </span>
+            <input type="text" formControlName="username" 
+                   class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 focus:border-[#00BFA5] focus:ring-4 focus:ring-[#00BFA5]/10 outline-none text-slate-800 rounded-xl transition-all font-medium placeholder:text-slate-300 shadow-sm"
+                   placeholder="Enter username">
+          </div>
+        </div>
+        
+        <!-- Password Field -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center">
+            <label class="text-slate-700 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+              Password <span class="text-rose-500">*</span>
+            </label>
+            <a href="#" class="text-[#1E88E5] text-xs font-bold hover:text-[#1565C0] transition-colors">Forgot password?</a>
+          </div>
+          <div class="relative group">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#00BFA5] transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            </span>
+            <input type="password" formControlName="password"
+                   class="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-200 focus:border-[#00BFA5] focus:ring-4 focus:ring-[#00BFA5]/10 outline-none text-slate-800 rounded-xl transition-all font-medium placeholder:text-slate-300 shadow-sm"
+                   placeholder="••••••••">
+          </div>
+        </div>
+
+        <!-- Option Area (Remember Me) -->
+        <div class="flex items-center">
+            <input type="checkbox" id="remember" class="w-4 h-4 accent-[#00BFA5] rounded border-slate-300 cursor-pointer">
+            <label for="remember" class="ml-2.5 text-slate-500 text-sm font-semibold cursor-pointer select-none">Remember me</label>
+        </div>
+        
+        <!-- Sign In Button -->
+        <button type="submit" [disabled]="!loginForm.valid"
+                class="mt-6 py-4 bg-[#00BFA5] hover:bg-[#00A693] text-white font-bold rounded-xl shadow-lg shadow-[#00BFA5]/30 transition-all w-full disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-3">
+          <span class="tracking-wide">Sign In</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+        </button>
+
+        <div class="mt-10 text-center text-sm font-medium text-slate-400">
+            Don't have an account? <a href="#" class="text-[#2c3e50] font-extrabold hover:text-[#1E88E5] transition-colors underline underline-offset-4 decoration-2">Signup</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Absolute Positioned Bottom Info -->
+  <div class="absolute bottom-8 left-0 right-0 text-white/60 text-[10px] font-bold flex flex-wrap justify-center items-center gap-x-8 gap-y-2 px-6">
+    <div class="flex items-center gap-2">
+        <svg class="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
+        <span>MAIL: support@oges.co</span>
+    </div>
+    <div class="flex items-center gap-2">
+        <svg class="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
+        <span>WHATSAPP SUPPORT: +91 9654658001 / +91 9821348811</span>
+    </div>
   </div>
 </div>
+
