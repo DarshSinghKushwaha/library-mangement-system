@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, books, requests
+from routers import auth, books, requests, notifications
 
 app = FastAPI(title="Library Management System API")
 
@@ -17,6 +17,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(books.router, prefix="/api/books", tags=["books"])
 app.include_router(requests.router, prefix="/api/requests", tags=["requests"])
+app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
 
 from sqlalchemy.orm import Session
 from database_sql import get_db, engine
