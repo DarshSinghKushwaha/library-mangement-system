@@ -121,9 +121,11 @@ export class UserViewComponent implements OnInit, OnDestroy, AfterViewInit {
         this.nextCursor = res.next_cursor;
         this.hasMore = res.has_more;
         this.totalBooks = res.total;
-        this.isLoadingBooks = false;
-        this.cdr.detectChanges();
-        setTimeout(() => this.observeSentinel(), 50);
+        setTimeout(() => {
+          this.isLoadingBooks = false;
+          this.cdr.detectChanges();
+          this.observeSentinel();
+        }, 200);
       },
       error: () => {
         this.isLoadingBooks = false;
@@ -157,7 +159,7 @@ export class UserViewComponent implements OnInit, OnDestroy, AfterViewInit {
         threshold: 0.1 
       }
     );
-    this.observeSentinel();
+    setTimeout(() => this.observeSentinel(), 500);
   }
 
   private observeSentinel() {

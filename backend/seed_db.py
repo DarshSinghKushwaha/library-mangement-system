@@ -6,12 +6,12 @@ from security import get_password_hash
 
 # ============ RAW DUMMY DATA ============
 _users_db = {
-    "admin": {"username": "admin", "password": "password", "role": "admin"},
-    "ankur": {"username": "ankur", "password": "password", "role": "user"},
-    "aman": {"username": "aman", "password": "password", "role": "user"},
-    "vikas": {"username": "vikas", "password": "password", "role": "user"},
-    "satyam": {"username": "satyam", "password": "password", "role": "user"},
-    "sagar": {"username": "sagar", "password": "password", "role": "user"}
+    "admin": {"username": "admin", "email": "admin@example.com", "password": "password", "role": "admin"},
+    "ankur": {"username": "ankur", "email": "ankur@example.com", "password": "password", "role": "user"},
+    "aman": {"username": "aman", "email": "aman@example.com", "password": "password", "role": "user"},
+    "vikas": {"username": "vikas", "email": "vikas@example.com", "password": "password", "role": "user"},
+    "satyam": {"username": "satyam", "email": "satyam@example.com", "password": "password", "role": "user"},
+    "sagar": {"username": "sagar", "email": "sagar@example.com", "password": "password", "role": "user"}
 }
 
 _book_data = [
@@ -113,6 +113,7 @@ def seed_database():
         for username, user_data in _users_db.items():
             user = models.User(
                 username=user_data["username"],
+                email=user_data.get("email"),
                 password=get_password_hash(user_data["password"]),
                 role=user_data["role"]
             )

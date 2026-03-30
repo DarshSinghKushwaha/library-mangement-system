@@ -6,6 +6,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Proxima Nova"', 'Montserrat', 'Inter', 'sans-serif'],
+      },
       colors: {
         bg: 'var(--color-bg)',
         cur: 'var(--color-cur)',

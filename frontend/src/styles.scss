@@ -4,39 +4,40 @@
 
 @layer base {
   :root {
-    --color-bg: #f1f5f9;  /* Light blue-slate background */
+    --color-bg: #F4F5F7;  /* Light grey professional background */
     --color-cur: #ffffff;
-    --color-fg: #0f172a;
-    --color-comment: #475569;
-    --color-primary: #f97316; /* Standard vibrant Bhagwa */
-    --color-secondary: #ea580c;
-    --color-success: #10b981;
+    --color-fg: #000000;
+    --color-comment: #64748b;
+    --color-primary: #2b2b6b; /* Dark Blue */
+    --color-secondary: #E74C2D; /* Orange/Red */
+    --color-success: #2C5B32; /* Deep Green */
     --color-warning: #f59e0b;
-    --color-error: #ef4444;
-    --glass-bg: #ffffff;
+    --color-error: #E74C2D;
+    --glass-bg: rgba(255, 255, 255, 0.95);
     --glass-border: #e2e8f0;
-    --glass-shadow: rgba(0, 0, 0, 0.05);
+    --glass-shadow: rgba(0, 0, 0, 0.03);
     --card-bg: #ffffff;
-    --sidebar-bg: #ffffff;
+    --sidebar-bg: #f4f5f7;
   }
   .dark {
-    --color-bg: #020617;  /* Deep Night Navy */
-    --color-cur: #0f172a;  /* Surface Navy */
-    --color-fg: #f8fafc;
-    --color-comment: #94a3b8;
-    --color-primary: #fb923c; /* Brighter orange for dark mode */
-    --color-secondary: #f97316;
-    --color-success: #34d399;
+    --color-bg: #121212;  /* Deep Night */
+    --color-cur: #1e1e1e;  /* Surface */
+    --color-fg: #e5e5e5;
+    --color-comment: #a3a3a3;
+    --color-primary: #4a4a8f; /* Lighter Blue for dark mode */
+    --color-secondary: #e76c53;
+    --color-success: #427549;
     --color-warning: #fbbf24;
-    --color-error: #f87171;
-    --glass-bg: rgba(15, 23, 42, 0.8);
-    --glass-border: rgba(51, 65, 85, 0.5);
-    --glass-shadow: rgba(0, 0, 0, 0.4);
-    --card-bg: #0f172a;
-    --sidebar-bg: #0f172a;
+    --color-error: #e76c53;
+    --glass-bg: rgba(30, 30, 30, 0.95);
+    --glass-border: rgba(64, 64, 64, 0.5);
+    --glass-shadow: rgba(0, 0, 0, 0.2);
+    --card-bg: #1e1e1e;
+    --sidebar-bg: #121212;
   }
   body {
-    @apply bg-bg text-fg m-0 p-0 font-sans transition-colors duration-300;
+    @apply bg-bg text-fg m-0 p-0 transition-colors duration-200;
+    font-family: 'Proxima Nova', 'Montserrat', 'Inter', sans-serif;
   }
 }
 
@@ -58,10 +59,10 @@
 /* Beautiful modern glassmorphism effect for cards */
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 4px 20px 0 var(--glass-shadow);
+  box-shadow: 0 2px 10px 0 var(--glass-shadow);
 }
 
 /* Basic printing styles for QR code */
